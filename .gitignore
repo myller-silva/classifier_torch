@@ -1,0 +1,8 @@
+venv
+static/uploads
+
+# arquivos temporários
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
