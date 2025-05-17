@@ -1,5 +1,3 @@
-# FROM pytorch/pytorch:1.9.0-cuda11.1-cudnn8-runtime
-# FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
 FROM python:3.10-slim
 
 RUN pip install --upgrade pip
@@ -13,4 +11,5 @@ ENV FLASK_APP=app
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:create_app()"]
+# CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:create_app()"]
+CMD ["flask", "run"]
