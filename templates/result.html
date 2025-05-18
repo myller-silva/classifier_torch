@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-            return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                    row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                    headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -45,24 +6,35 @@
     <title>Classification Result</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
-        <h1 class="text-2xl font-bold mb-6 text-center">Classification Result</h1>
-        <div class="mb-6">
-            <p class="text-lg">Predicted Class: <strong>{{ class_name | capitalize }}</strong> (ID: {{ class_id }})</p>
+<body class="bg-gray-200 flex items-center justify-center min-h-screen">
+    <div id="content" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl content-hidden">
+        <h1 class="text-3xl font-semibold mb-6 text-center text-gray-800">Classification Result</h1>
+        {% if error %}
+            <p class="text-red-500 mb-4 text-center">{{ error }}</p>
+        {% endif %}
+        <div class="mb-6 text-center">
+            <p class="text-lg">Predicted Class: <strong>{{ class_name | capitalize }}</strong></p>
             <p class="text-lg">Confidence: <strong>{{ "%.2f" | format(confidence * 100) }}%</strong></p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <h2 class="text-lg font-semibold mb-2">Original Image</h2>
-                <img src="{{ url_for('static', filename=image_path) }}" alt="Original Image" class="w-full rounded">
+                <h2 class="text-lg font-semibold mb-2 text-gray-700">Original Image</h2>
+                <img src="{{ original_image_path }}" alt="Original Image" 
+                    class="w-full rounded-lg shadow-md">
             </div>
-            <div>
-                <h2 class="text-lg font-semibold mb-2">Explanation (XAI)</h2>
-                <img src="{{ url_for('static', filename=attr_image_path) }}" alt="Explanation Image" class="w-full rounded">
-            </div>
+            {% for image in images %}
+                <div>
+                    <h2 class="text-lg font-semibold mb-2 text-gray-700">{{ image.title | capitalize }}</h2>
+                    <img src="{{ image.path }}" alt="{{ image.title }}" 
+                        class="w-full rounded-lg shadow-md">
+                    <p class="text-sm text-gray-500 mt-2">title: {{ image.title }}</p>
+                    <p class="text-sm text-gray-500 mt-2">path: {{ image.path }}</p>
+                </div>
+            {% endfor %}
         </div>
-        <a href="/" class="block mt-6 text-center bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Classify Another Image</a>
+        <a href="/" class="block mt-6 text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200">
+            Classify Another Image
+        </a>
     </div>
 </body>
 </html>
