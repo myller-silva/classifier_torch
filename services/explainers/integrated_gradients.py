@@ -7,7 +7,8 @@ import torch
 from torchvision import transforms
 
 
-class ImageExplainer:
+# class ImageExplainer:
+class IntegratedGradientsExplainer:
     """Service for generating explanations using Integrated Gradients."""
 
     def __init__(

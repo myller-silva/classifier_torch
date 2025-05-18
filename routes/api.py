@@ -7,11 +7,11 @@ from pathlib import Path
 from PIL import Image
 from flask import Blueprint, request, jsonify, current_app
 from services.classifier import ImageClassifier
-from services.explainer import ImageExplainer
+from services.explainers.integrated_gradients import IntegratedGradientsExplainer
 
 api_bp = Blueprint("api", __name__)
 classifier = ImageClassifier()
-explainer = ImageExplainer(classifier.model)
+explainer = IntegratedGradientsExplainer(classifier.model)
 
 
 def allowed_file(filename: str) -> bool:

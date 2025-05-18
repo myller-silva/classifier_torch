@@ -4,17 +4,18 @@ from pathlib import Path
 from PIL import Image
 from flask import Blueprint, render_template, request, current_app
 from services.classifier import ImageClassifier
-from services.explainer import ImageExplainer
-from services.gradcam_explainer import GradCAMExplainer
-from services.lime_explainer import LIMEExplainer
-from services.shap_explainer import SHAPExplainer
+from services.explainers.integrated_gradients import IntegratedGradientsExplainer
+from services.explainers.gradcam import GradCAMExplainer
+from services.explainers.lime import LIMEExplainer
+from services.explainers.shap import SHAPExplainer
 
 
 web_bp = Blueprint("web", __name__)
+
 classifier = ImageClassifier()
 explainers = {
-    "integrated_gradients": ImageExplainer(classifier.model),
     "gradcam": GradCAMExplainer(classifier.model),
+    "integrated_gradients": IntegratedGradientsExplainer(classifier.model),
     # "lime": LIMEExplainer(classifier.model),
     # "shap": SHAPExplainer(classifier.model),
 }

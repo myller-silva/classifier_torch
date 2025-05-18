@@ -5,7 +5,8 @@ import numpy as np
 from PIL import Image
 import torch
 from torchvision import transforms
-import shap
+# import shap
+from shap import DeepExplainer
 
 
 class SHAPExplainer:
@@ -47,7 +48,7 @@ class SHAPExplainer:
         input_tensor = self.transform(image).unsqueeze(0).to(self.device)
 
         # Create SHAP DeepExplainer
-        explainer = shap.DeepExplainer(self.model, input_tensor)
+        explainer = DeepExplainer(self.model, input_tensor)
 
         # Compute SHAP values
         shap_values = explainer.shap_values(input_tensor)
