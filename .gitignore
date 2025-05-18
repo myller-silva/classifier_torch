@@ -4,6 +4,7 @@ venv*
 
 
 # arquivos temporários
+tmp.py
 *.pyc
 *.pyo
 *.pyd
