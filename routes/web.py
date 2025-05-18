@@ -1,20 +1,40 @@
 """Flask application factory for the web application."""
 
-# from werkzeug.utils import secure_filename
 from pathlib import Path
 from PIL import Image
 from flask import Blueprint, render_template, request, current_app
 from services.classifier import ImageClassifier
 from services.explainer import ImageExplainer
+from services.gradcam_explainer import GradCAMExplainer
+from services.lime_explainer import LIMEExplainer
+from services.shap_explainer import SHAPExplainer
+
 
 web_bp = Blueprint("web", __name__)
 classifier = ImageClassifier()
-explainer = ImageExplainer(classifier.model)
+explainers = {
+    "integrated_gradients": ImageExplainer(classifier.model),
+    "gradcam": GradCAMExplainer(classifier.model),
+    # "lime": LIMEExplainer(classifier.model),
+    # "shap": SHAPExplainer(classifier.model),
+}
 
 
 def allowed_file(filename: str) -> bool:
     """Check if the file extension is allowed."""
     return Path(filename).suffix.lower() in current_app.config["ALLOWED_EXTENSIONS"]
+
+
+def validate_upload_request(files: dict) -> str:
+    """Validate the image upload request."""
+    if "image" not in files:
+        return "No image provided"
+    file = files["image"]
+    if file.filename == "":
+        return "No image selected"
+    if not allowed_file(file.filename):
+        return "File type not allowed"
+    return None
 
 
 @web_bp.route("/")
@@ -23,43 +43,51 @@ def home():
     return render_template("index.html")
 
 
+@web_bp.route("/about")
+def about():
+    """Render the about page."""
+    return render_template("about.html")
+
 @web_bp.route("/result", methods=["POST"])
 def result():
     """Process image upload and display classification results."""
-    if "image" not in request.files:
-        return render_template("index.html", error="No image provided")
-
+    error = validate_upload_request(request.files)
+    if error:
+        return render_template("index.html", error=error)
     file = request.files["image"]
-    if file.filename == "":
-        return render_template("index.html", error="No image selected")
-
-    if not allowed_file(file.filename):
-        return render_template(
-            "index.html", error="Invalid file type. Allowed: jpg, jpeg, png"
-        )
 
     try:
         image = Image.open(file.stream).convert("RGB")
 
         # Save original image
-        image_path = Path(current_app.config["UPLOAD_FOLDER"]) / "temp_image.jpg"
+        base_path = current_app.config["UPLOAD_FOLDER"]
+        image_path = f"{base_path}/temp_image.jpg"
         image.save(image_path)
 
         # Classify image
         class_id, class_name, confidence = classifier.classify(image)
 
-        # Generate explanation
-        attr_image = explainer.explain(image, class_id)
-        attr_image_path = Path(current_app.config["UPLOAD_FOLDER"]) / "attr_image.png"
-        attr_image.save(attr_image_path)
+        # Generate explanations using all explainers
+        images = []
+        for explainer_name, explainer in explainers.items():
+            print(f"Explainer: {explainer_name}")
+            attr_image = explainer.explain(image, class_id)
+            attr_image_path = f"{base_path}/{explainer_name}_image.png"
+            attr_image.save(attr_image_path)
+            images.append(
+                {
+                    "title": explainer_name,
+                    "path": str(attr_image_path),
+                }
+            )
 
         return render_template(
             "result.html",
             class_id=class_id,
             class_name=class_name,
             confidence=confidence,
-            image_path="uploads/temp_image.jpg",
-            attr_image_path="uploads/attr_image.png",
+            original_image_path=str(image_path),
+            images=images,
         )
     except (OSError, ValueError) as e:
         current_app.logger.error(f"Error processing image: {str(e)}")
