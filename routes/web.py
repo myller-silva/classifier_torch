@@ -43,11 +43,6 @@ def home():
     return render_template("index.html")
 
 
-@web_bp.route("/about")
-def about():
-    """Render the about page."""
-    return render_template("about.html")
-
 @web_bp.route("/result", methods=["POST"])
 def result():
     """Process image upload and display classification results."""
