@@ -6,6 +6,7 @@ from config import Config
 from routes.web import web_bp
 from routes.api import api_bp
 
+
 def create_app():
     """Factory function to create and configure the Flask app."""
     app = Flask(__name__)
@@ -20,10 +21,10 @@ def create_app():
 
     return app
 
+
 # Initialize the app
 app = create_app()
 
 if __name__ == "__main__":
     print("Starting Flask app...")
     app.run(debug=True, host="0.0.0.0", port=5000)
-

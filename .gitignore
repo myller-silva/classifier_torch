@@ -1,8 +1,12 @@
-venv
-static/uploads
+# ambientes virtuais
+# ignorar todos que comecam com venv
+venv*
+
 
 # arquivos temporários
 *.pyc
 *.pyo
 *.pyd
 __pycache__/
+
+static/uploads
